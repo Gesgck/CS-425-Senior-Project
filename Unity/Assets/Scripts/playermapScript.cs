@@ -3,7 +3,7 @@ using UnityEngine.InputSystem;
 
 public class playermapScript : MonoBehaviour
 {
-    private float moveSpeed = 5;
+    [SerializeField] private float moveSpeed = 5;
     private Rigidbody2D rb;
     private Vector2 moveInput;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
