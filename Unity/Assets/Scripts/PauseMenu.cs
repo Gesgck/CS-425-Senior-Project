@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using UnityEditor.Build;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
