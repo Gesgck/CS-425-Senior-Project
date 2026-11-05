@@ -10,6 +10,14 @@ public class playermapScript : MonoBehaviour
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        // If the GameManager has a saved position stored, move the player there
+        if (GameManager.Instance != null && GameManager.Instance.lastPosition != Vector2.zero)
+        {
+            transform.position = GameManager.Instance.lastPosition;
+
+            // Reset position
+            GameManager.Instance.lastPosition = Vector2.zero;
+        }
     }
 
     // Update is called once per frame

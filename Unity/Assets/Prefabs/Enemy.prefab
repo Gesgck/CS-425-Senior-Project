@@ -180,6 +180,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 10c8553af69bd794f81ff452c3d3c76d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  uniqueEnemyID: Enemy
 --- !u!61 &8600039585304914558
 BoxCollider2D:
   m_ObjectHideFlags: 0
