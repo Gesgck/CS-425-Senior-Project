@@ -1,12 +1,12 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
-public class startMenuController : MonoBehaviour
+public class StartMenuController : MonoBehaviour
 {
-    public void onPlayClick()
+    public void OnPlayClick()
     {
-        SceneManager.LoadScene("SampleScene");
+        SceneManager.LoadScene(1);
     }
-    public void onQuitClick()
+    public void OnQuitClick()
     {
         #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
@@ -14,8 +14,17 @@ public class startMenuController : MonoBehaviour
             Application.Quit(); // Quit the application
     }
 
-    public void onSettingsClick()
+    public void OnSettingsClick()
     {
         //SceneManager.LoadScene("SettingsScene");
+    }
+}
+
+
+public class SettingsMenuController : MonoBehaviour
+{
+    public void OnBackClick()
+    {
+        SceneManager.LoadScene(0); // Load the main menu scene
     }
 }

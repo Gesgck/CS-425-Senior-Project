@@ -1,0 +1,22 @@
+﻿
+title: Start
+
+---
+
+<<declare $xp = 0>>
+Panam: This title screen music is amazing
+Panam: What are your thoughts?
+-> Great!
+-> Say that again 
+    Panam: I will not be repeating myself!
+    Panam: But fine, for testing options I'll give you experience
+    <<set $xp = $xp + 1>>
+Panam: Perfect!
+Narrator: You have {$xp} experience!
+-> Hip Hip!
+    Panam: Hooray!
+-> Aw man...
+    Panam: S-stop being so...s-s-sad.....
+
+Narrator: Now onto the mission!
+===
