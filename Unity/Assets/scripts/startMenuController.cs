@@ -2,11 +2,10 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 public class startMenuController : MonoBehaviour
 {
-    public void onStartClick()
+    public void onPlayClick()
     {
-       // SceneManagement.LoadScene("MainGameScene");
+        SceneManager.LoadScene("SampleScene");
     }
-
     public void onQuitClick()
     {
         #if UNITY_EDITOR
@@ -17,6 +16,6 @@ public class startMenuController : MonoBehaviour
 
     public void onSettingsClick()
     {
-        //SceneManagement.LoadScene("SettingsScene");
+        //SceneManager.LoadScene("SettingsScene");
     }
 }
