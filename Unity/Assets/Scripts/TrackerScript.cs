@@ -3,13 +3,12 @@ using UnityEngine;
 public class TrackerScript : MonoBehaviour
 {
     [SerializeField] private string enemyID;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         // Safety check if ID was left blank in the Inspector
         if (string.IsNullOrEmpty(enemyID))
         {
-            Debug.LogWarning($"Enemy {gameObject.name} has no Unique ID assigned!", this);
+            Debug.LogWarning($"Enemy {gameObject.name} has no Unique ID", this);
             return;
         }
 
