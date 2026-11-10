@@ -1,136 +1,187 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 
 public class cardMovement : MonoBehaviour, IDragHandler, IPointerDownHandler, IPointerEnterHandler, IPointerExitHandler
 {
+    private enum cardState {Idle, Hover, Drag}
+    private cardState currentState = cardState.Idle;
+
     private RectTransform rectTransform;
+    private RectTransform parentRect;
     private Canvas canvas;
-    private Vector2 originalLocalPointerPosition;
-    private Vector3 originalPanelLocalPosition;
+    private handManager hand;
+
+    private Vector2 pointerStartPos;
+    private Vector3 cardStartPos;
     private Vector3 originalScale;
-    private int currentState;
-    private Quaternion originalRotation;
-    private Vector3 originalPosition;
+
+    public Vector3 targetPos;
+    private Quaternion targetRot;
+
+    private bool keepOnTop;
 
     [SerializeField] private float selectScale = 1.1f;
-    [SerializeField] private Vector2 cardPlay;
-    [SerializeField] private Vector3 playPos;
+    [SerializeField] private float moveSpeed = 12f;
     [SerializeField] private GameObject glowEffect;
-    [SerializeField] private GameObject playArrow;
+
+    public int layerPriority
+    {
+        get
+        {
+            switch (currentState)
+            {
+                case cardState.Drag:
+                    return 3;
+                case cardState.Hover:
+                    return 2;
+                default:
+                    return keepOnTop ? 1 : 0;
+            }
+        }
+    }
 
     void Awake()
     {
         rectTransform = GetComponent<RectTransform>();
+        parentRect = rectTransform.parent as RectTransform;
+        hand = FindAnyObjectByType<handManager>();
         canvas = GetComponentInParent<Canvas>();
+
         originalScale = rectTransform.localScale;
-        originalRotation = rectTransform.localRotation;
-        originalPosition = rectTransform.localPosition;
+        targetPos = rectTransform.localPosition;
+        targetRot = rectTransform.localRotation;
+
+        if (glowEffect != null) glowEffect.SetActive(false);
+    }
+
+    public void setTarget(Vector3 pos, Quaternion rot)
+    {
+        targetPos = pos;
+        targetRot = rot;
     }
 
     void Update()
     {
-        switch (currentState)
+        if (currentState == cardState.Hover && !PointerIsOverCard())
         {
-            case 0:
-                HandleHoverState();
-                break; 
-            case 1:
-                HandleDragState();
-                if (!Input.GetMouseButton(0))
-                {
-                    transitionToState0();
-                }
-                break;
-            case 2:
-                HandlePlayedState();
-                if (!Input.GetMouseButton(0))
-                {
-                    transitionToState0();
-                }
-                break;
-        }
-    }
-
-    private void transitionToState0()
-    {
-        currentState = 0;
-        rectTransform.localScale = originalScale;
-        rectTransform.localRotation = originalRotation;
-        rectTransform.localPosition = originalPosition; 
-        glowEffect.SetActive(false);
-        playArrow.SetActive(false);
-    }   
-    
-    private void HandleHoverState()
-    {
-        glowEffect.SetActive(true); 
-        rectTransform.localScale = originalScale * selectScale;
-    }
-
-       private void HandleDragState()
-    {
-        rectTransform.localRotation = Quaternion.identity;
-    }
-
-    private void HandlePlayedState()
-    {
-        rectTransform.localPosition = playPos;
-        rectTransform.localRotation = Quaternion.identity;
-
-        if (Input.mousePosition.y < cardPlay.y)
+            returnToHand();
+        } else if (currentState == cardState.Drag && (Mouse.current == null || !Mouse.current.leftButton.isPressed))
         {
-            currentState = 2;
-            playArrow.SetActive(false);
+            returnToHand();
         }
+
+        float t = 1f - Mathf.Exp(-moveSpeed * Time.deltaTime);
+
+        Vector3 goalScale = currentState == cardState.Idle ? originalScale : originalScale * selectScale;
+        Quaternion goalRot = currentState == cardState.Drag ? Quaternion.identity : targetRot;
+
+        rectTransform.localScale = Vector3.Lerp(rectTransform.localScale, goalScale, t);
+        rectTransform.localRotation = Quaternion.Slerp(rectTransform.localRotation, goalRot, t);
+
+        if (currentState != cardState.Drag)
+        {
+            rectTransform.localPosition = Vector3.Lerp(rectTransform.localPosition, targetPos, t);
+            rectTransform.localRotation = Quaternion.Slerp(rectTransform.localRotation, targetRot, t);
+        }
+
+        if (keepOnTop && currentState == cardState.Idle)
+        {
+            bool arrived = (rectTransform.localPosition - targetPos).sqrMagnitude < 1f && (rectTransform.localScale - goalScale).sqrMagnitude < 0.0001f; 
+            if (arrived)
+            {
+                keepOnTop = false;
+                if (hand != null) hand.refreshLayers();
+            }
+        }
+
+    }
+
+    void OnDisable()
+    {
+        currentState = cardState.Idle;
+        keepOnTop = false;
+        if (glowEffect != null) glowEffect.SetActive(false);
+        if (hand != null && hand.draggedCard == gameObject) hand.draggedCard = null;
+    }
+
+    private bool PointerIsOverCard()
+    {
+        if (Mouse.current == null) return false;
+
+        Camera cam = (canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay)
+            ? canvas.worldCamera
+            : null;
+
+        Vector2 mousePos = Mouse.current.position.ReadValue();
+        return RectTransformUtility.RectangleContainsScreenPoint(rectTransform, mousePos, cam);
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (currentState == 0)
-        {
-            originalPosition = rectTransform.localPosition;
-            originalRotation = rectTransform.localRotation;
-            originalScale = rectTransform.localScale;
+        if (currentState != cardState.Idle) return;
+        if (hand != null && hand.draggedCard != null) return;
 
-            currentState = 1;
-        }
+        currentState = cardState.Hover;
+        rectTransform.localScale = originalScale * selectScale;
+        
+        if (glowEffect != null) glowEffect.SetActive(true);
+        if (hand != null) hand.refreshLayers();
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        if (currentState == 1)
+        if (currentState == cardState.Hover)
         {
-            transitionToState0();
+            returnToHand();
         }
     }
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        if (currentState == 1)
+        if (currentState != cardState.Hover) return;
+
+        currentState = cardState.Drag; 
+
+        if (hand != null) 
         {
-            currentState = 2; 
-            RectTransformUtility.ScreenPointToLocalPointInRectangle((canvas.GetComponent<RectTransform>()), eventData.position, eventData.pressEventCamera, out Vector2 localPoint);
-            originalPanelLocalPosition = rectTransform.localPosition;
+            hand.draggedCard = gameObject;
+            hand.refreshLayers();
         }
+
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(parentRect, eventData.position, eventData.pressEventCamera, out pointerStartPos);
+        cardStartPos = rectTransform.localPosition;
     }
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (currentState == 2)
+        if (currentState != cardState.Drag) return;
+        
+        if (RectTransformUtility.ScreenPointToLocalPointInRectangle(parentRect, eventData.position, eventData.pressEventCamera, out Vector2 localPoint))
         {
-            if (RectTransformUtility.ScreenPointToLocalPointInRectangle((canvas.GetComponent<RectTransform>()), eventData.position, eventData.pressEventCamera, out Vector2 localPoint))
-            {
-                localPoint /= canvas.scaleFactor;
-                Vector3 offset = localPoint - originalLocalPointerPosition;
-                rectTransform.localPosition = originalPanelLocalPosition + offset;
-                
-                if (rectTransform.localPosition.y > cardPlay.y)
-                {
-                    currentState = 3;
-                    playArrow.SetActive(true);
-                    rectTransform.localPosition = playPos;
-                }
-            }
+            Vector2 offset = localPoint - pointerStartPos;
+            rectTransform.localPosition = cardStartPos + (Vector3)offset;
+            if (hand != null) hand.UpdateDragOrder(gameObject);
+        }
+    }
+
+    public void OnPointerUp(PointerEventData eventData)
+    {
+        if (currentState == cardState.Drag)
+            returnToHand();
+    }
+
+    private void returnToHand()
+    {
+        currentState = cardState.Idle;
+        keepOnTop = true;
+        
+        rectTransform.localScale = originalScale;
+        if (glowEffect != null) glowEffect.SetActive(false);
+        
+        if (hand != null) {
+            if (hand.draggedCard == gameObject) hand.draggedCard = null;
+            hand.updateHandLayout();
         }
     }
 

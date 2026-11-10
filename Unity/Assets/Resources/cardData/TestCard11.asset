@@ -12,10 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 243a585a16d62cc499dd8f013522b25b, type: 3}
   m_Name: TestCard11
   m_EditorClassIdentifier: Assembly-CSharp::cardScripts.Card
-  cardName: TestCard5
+  cardName: TestCard11
   cardType: 1
   cardCost: 2
   cardHealth: 3
   cardDmgMin: 5
   cardDmgMax: 6
   damageType: 0
+  cardSprite: {fileID: 0}

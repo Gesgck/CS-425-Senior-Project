@@ -9,14 +9,12 @@ public class handManager : MonoBehaviour
     public deckManager deckManager;
     public GameObject cardPrefab;
     public Transform handPosition;
-    public float fanSpread = 7.5f;
-    public float horCardSpace = -118f;
+    public float fanSpread = -7.5f;
+    public float horCardSpace = 118f;
     public float vertCardSpace = 38f;
     public List<GameObject> hand = new List<GameObject>(); // list of cards in hand
-    void Start()
-    {
 
-    }
+    [HideInInspector] public GameObject draggedCard;
 
     public void addCardToHand(Card card)
     {
@@ -28,34 +26,95 @@ public class handManager : MonoBehaviour
         updateHandLayout();
     } 
 
-    void Update()
+    public void removeCardFromHand(Card card)
     {
-        //updateHandLayout();
+        GameObject cardObject = hand.Find(cardInHand => cardInHand.GetComponent<cardDisplay>().cardData == card);
+        if (cardObject == null) return;
+
+        cardDisplay display = cardObject.GetComponent<cardDisplay>();
+        if (display != null && display.cardData != null) deckManager.discard(display.cardData);
+
+        hand.Remove(cardObject);
+        if (Application.isPlaying)
+        {
+            Destroy(cardObject);
+        } else
+        {
+            DestroyImmediate(cardObject);
+        }
+        updateHandLayout();
+
     }
 
-    private void updateHandLayout()
+     private float slotX(int i, int n)
     {
-        int cardQuantity = hand.Count;
+        return (i - (n - 1) / 2f) * horCardSpace;
+    }
 
-        if (cardQuantity == 1)
+    public void UpdateDragOrder(GameObject card)
+    {
+        int current = hand.IndexOf(card);
+        if (current < 0) return;
+
+        int n = hand.Count;
+        float x = card.transform.localPosition.x;
+
+        int best = current;
+        float bestDist = float.MaxValue;
+        if (hand == null) return;
+        for (int i = 0; i < n; i++)
         {
-            hand[0].transform.localPosition = new Vector3(0f, 0f, 0f);
-            hand[0].transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
-
-            return;
+            float d = Mathf.Abs(x - slotX(i, n));
+            if (d < bestDist)
+            {
+                bestDist = d;
+                best = i;
+            }
         }
 
-        for (int i = 0; i < cardQuantity; i++)
+        if (best != current)
         {
-            float rot = (i - (cardQuantity - 1) / 2f) * fanSpread;
-            hand[i].transform.localPosition = handPosition.localPosition + Quaternion.Euler(0, 0, rot) * Vector3.up * 2f;
-            hand[i].transform.localRotation = Quaternion.Euler(0, 0, rot);
+            hand.RemoveAt(current);
+            hand.Insert(best, card);
+            updateHandLayout();
+        }
+    }
 
-            float horizontalOffset = (i - (cardQuantity - 1) / 2f) * horCardSpace;
+    public void updateHandLayout()
+    {
+        int n = hand.Count;
 
-            float normalVertPos = (2f * i / (cardQuantity - 1)) - 1f;
-            float verticalOffset = (1 - normalVertPos * normalVertPos) * vertCardSpace;
-            hand[i].transform.localPosition = new Vector3(horizontalOffset, verticalOffset, 0f);
+        for (int i = 0; i < n; i++)
+        {
+            GameObject card = hand[i];
+            if (card == draggedCard) continue; // follows the pointer instead
+
+            float rot = (i - (n - 1) / 2f) * fanSpread;
+            float t = n > 1 ? (2f * i / (n - 1)) - 1f : 0f;
+            float vert = n > 1 ? (1 - t * t) * vertCardSpace : 0f;
+
+            Vector3 pos = new Vector3(slotX(i, n), vert, 0f);
+            Quaternion rotation = n > 1 ? Quaternion.Euler(0, 0, rot) : Quaternion.identity;
+
+            card.GetComponent<cardMovement>().setTarget(pos, rotation);
+        }
+
+        refreshLayers();
+    }
+
+    public void refreshLayers()
+    {
+        int cardIndex = 0;
+        for (int priority = 0; priority <= 3; priority++)
+        {
+            foreach (GameObject card in hand)
+            {
+                cardMovement mv = card.GetComponent<cardMovement>();
+                int p = mv != null ? mv.layerPriority : 0;
+                if (p != priority) continue;
+
+                card.transform.SetSiblingIndex(cardIndex++);
+            }
         }
     }
 }

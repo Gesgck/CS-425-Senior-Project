@@ -13,7 +13,7 @@ public class deckManagerEditor : Editor
 
         deckManager deckManager = (deckManager)target;
         if (GUILayout.Button("Draw Next Card")){
-            handManager handManager = FindObjectOfType<handManager>();
+            handManager handManager = FindAnyObjectByType<handManager>();
             if (handManager != null){
                 deckManager.drawCard(handManager);
             }
