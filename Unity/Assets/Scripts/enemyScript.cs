@@ -28,7 +28,7 @@ public class enemyScript : MonoBehaviour
             }
 
             // Trigger the scene transition
-            GameManager.Instance.ChangeScene("TestScene");
+            GameManager.Instance.ChangeScene("CardScene");
         }
     }
 }
