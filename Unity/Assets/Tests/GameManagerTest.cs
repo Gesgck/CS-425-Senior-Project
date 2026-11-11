@@ -12,15 +12,13 @@ public class GameManagerTest
     {
         // arrange
         GameObject gmObj = new GameObject("EnemyStateTest");
-        gmObj.AddComponent<GameManager>();
+        GameManager gm = gmObj.AddComponent<GameManager>();
         yield return null;
 
         string testEnemyID = "TestEnemy";
 
-        Assert.IsFalse(GameManager.Instance.IsEnemyDefeated(testEnemyID));
-        GameManager.Instance.DefeatEnemy(testEnemyID);
-        Assert.IsTrue(GameManager.Instance.IsEnemyDefeated(testEnemyID));
-
-        Object.Destroy(gmObj);
+        Assert.IsFalse(gm.IsEnemyDefeated(testEnemyID));
+        gm.DefeatEnemy(testEnemyID);
+        Assert.IsTrue(gm.IsEnemyDefeated(testEnemyID));
     }
 }

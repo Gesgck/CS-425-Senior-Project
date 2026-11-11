@@ -4,8 +4,8 @@ using Yarn.Unity;
 
 public class YarnSceneCommands : MonoBehaviour
 {
-    [YarnCommand("ChangeScene")]
-    public void ChangeScene()
+    [YarnCommand("LoadScene")]
+    public static void ChangeScene()
     {
         SceneManager.LoadScene(2);
     }
