@@ -4,9 +4,17 @@
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
+<<<<<<< HEAD
         "NewAssembly"
     ],
     "includePlatforms": [],
+=======
+        "gameScripts"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+>>>>>>> main
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": true,
