@@ -19,4 +19,5 @@ Narrator: You have {$xp} experience!
     Panam: S-stop being so...s-s-sad.....
 
 Narrator: Now onto the mission!
+<<ChangeScene>>
 ===
